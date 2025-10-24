@@ -3,6 +3,9 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Team extends Document {
+    @Prop({ required: true, trim: true })
+    name: string;
+
     @Prop({ type: Types.ObjectId, ref: 'Tournament', required: true })
     tournament: Types.ObjectId;
 
@@ -11,3 +14,5 @@ export class Team extends Document {
 }
 
 export const TeamSchema = SchemaFactory.createForClass(Team);
+
+TeamSchema.index({ name: 1, tournament: 1 }, { unique: true });

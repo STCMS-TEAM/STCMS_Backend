@@ -24,17 +24,22 @@ export class Tournament extends Document {
     })
     type: string;
 
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Team' }] })
-    teams: Types.ObjectId[];
-
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Match' }] })
-    matches: Types.ObjectId[];
-
-    @Prop({
-        enum: ['upcoming', 'ongoing', 'finished'],
-        default: 'upcoming',
-    })
-    status: string;
 }
 
 export const TournamentSchema = SchemaFactory.createForClass(Tournament);
+
+TournamentSchema.virtual('teams', {
+    ref: 'Team',
+    localField: '_id',
+    foreignField: 'tournament'
+});
+
+TournamentSchema.virtual('matches', {
+    ref: 'Match',
+    localField: '_id',
+    foreignField: 'tournament'
+});
+
+// Abilita `virtuals` nel toJSON / toObject
+TournamentSchema.set('toJSON', { virtuals: true });
+TournamentSchema.set('toObject', { virtuals: true });

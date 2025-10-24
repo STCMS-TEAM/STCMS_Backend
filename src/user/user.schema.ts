@@ -25,9 +25,6 @@ export class User extends Document {
     @Prop()
     phone_number: string;
 
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Tournament' }] })
-    tournamentsCreated: Types.ObjectId[];
-
     matchPassword: Function;
 }
 
@@ -44,3 +41,19 @@ UserSchema.pre<User>('save', async function (next) {
 UserSchema.methods.matchPassword = async function (enteredPassword: string) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+UserSchema.virtual('tournamentsCreated', {
+    ref: 'Tournament',       // modello di riferimento
+    localField: '_id',        // campo locale (id dell'utente)
+    foreignField: 'createdBy' // campo nel torneo che punta all'utente
+});
+
+UserSchema.virtual('teams', {
+    ref: 'Team',
+    localField: '_id',
+    foreignField: 'players',
+});
+
+// Abilita `virtuals` nel toJSON / toObject
+UserSchema.set('toJSON', { virtuals: true });
+UserSchema.set('toObject', { virtuals: true });

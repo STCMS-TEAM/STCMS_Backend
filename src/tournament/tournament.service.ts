@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import {Injectable, InternalServerErrorException, NotFoundException} from '@nestjs/common';
+import {InjectModel} from '@nestjs/mongoose';
+import {Model, Types} from 'mongoose';
 import { Tournament } from './tournament.schema';
 
 @Injectable()
 export class TournamentService {
-  constructor(@InjectModel(Tournament.name) private readonly tournamentModel: Model<Tournament>) {}
+  constructor(@InjectModel(Tournament.name) private tournamentModel: Model<Tournament>) {}
 
   async findAll(): Promise<Tournament[]> {
     return this.tournamentModel
@@ -28,13 +28,19 @@ export class TournamentService {
   }
 
   async create(data: any): Promise<Tournament> {
-    const newTournament = new this.tournamentModel({
-      ...data,
-      createdBy: new Types.ObjectId(data.createdBy),
-      teams: data.teams?.map((id: string) => new Types.ObjectId(id)) || [],
-      matches: data.matches?.map((id: string) => new Types.ObjectId(id)) || [],
-    });
-    return newTournament.save();
+    try {
+      const newTournament = new this.tournamentModel({
+        ...data,
+        createdBy: new Types.ObjectId(data.createdBy)
+      });
+
+      return newTournament.save();
+    } catch (error) {
+      throw new InternalServerErrorException(
+          'Errore nella creazione del torneo',
+          error.message,
+      );
+    }
   }
 
   async update(id: string, data: any): Promise<Tournament> {
