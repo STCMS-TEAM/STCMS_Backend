@@ -1,0 +1,27 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+      .setTitle('Spike stream')
+      .setDescription('Spike stream: stream your match with the score')
+      .setVersion('1.0')
+      .addBasicAuth(
+          {
+            type: 'http',
+            scheme: 'basic',
+          },
+          'basic-auth', // nome dello schema da riusare nei controller
+      )
+      .addBearerAuth()
+      .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();
