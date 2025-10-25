@@ -9,6 +9,9 @@ export class Team extends Document {
     @Prop({ type: Types.ObjectId, ref: 'Tournament', required: true })
     tournament: Types.ObjectId;
 
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    captain: Types.ObjectId;
+
     @Prop({ type: [{ type: Types.ObjectId, ref: 'User', required: true }] })
     players: Types.ObjectId[];
 }

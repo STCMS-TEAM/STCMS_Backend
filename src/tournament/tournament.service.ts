@@ -2,6 +2,7 @@ import {Injectable, InternalServerErrorException, NotFoundException} from '@nest
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
 import { Tournament } from './tournament.schema';
+import {TeamService} from "../team/team.service";
 
 @Injectable()
 export class TournamentService {
@@ -57,4 +58,6 @@ export class TournamentService {
     const result = await this.tournamentModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Tournament not found');
   }
+
+
 }

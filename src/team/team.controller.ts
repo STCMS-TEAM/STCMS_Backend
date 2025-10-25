@@ -7,67 +7,39 @@ import {
   Delete,
   Patch,
   UseGuards,
-  BadRequestException,
+  BadRequestException, Req,
 } from '@nestjs/common';
 import { TeamService } from './team.service';
-import { CreateTeamDto } from './dto/create-team';
 import {JwtAuthGuard} from "../auth/auth.guard";
 import {Types} from "mongoose";
+import {IsTeamCaptain} from "./guards/is-team-captain";
 
-@Controller('tournaments/:tournamentId/teams')
+@Controller('teams')
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(
-      @Param('tournamentId') tournamentId: string,
-      @Body() createTeamDto: CreateTeamDto,
-  ) {
-    try {
-      return await this.teamService.create(
-        createTeamDto,
-        new (require('mongoose').Types.ObjectId)(tournamentId)
-      );
-    } catch (error) {
-      if (error.code === 11000) {
-        throw new BadRequestException(
-            'Un team con questo nome esiste già in questo torneo',
-        );
-      }
-      throw error;
-    }
-  }
-
-  @Get()
-  async findAll(@Param('tournamentId') tournamentId: string) {
-    return this.teamService.findAllByTournament(tournamentId);
-  }
-
   @Get(':id')
   async findOne(
-      @Param('tournamentId') tournamentId: string,
       @Param('id') id: string,
   ) {
-    return this.teamService.findOne(tournamentId, id);
+    return this.teamService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, IsTeamCaptain)
   @Patch(':id')
   async update(
-      @Param('tournamentId') tournamentId: string,
       @Param('id') id: string,
       @Body() updateTeamDto: any,
+      @Req() req
   ) {
-    return this.teamService.update(new Types.ObjectId(id), updateTeamDto, new Types.ObjectId(tournamentId));
+    return this.teamService.update(new Types.ObjectId(id), updateTeamDto, new Types.ObjectId(req.user.id));
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, IsTeamCaptain)
   @Delete(':id')
   async remove(
-      @Param('tournamentId') tournamentId: string,
       @Param('id') id: string,
   ) {
-    return this.teamService.remove(tournamentId, id);
+    return this.teamService.remove(id);
   }
 }

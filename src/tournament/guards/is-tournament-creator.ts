@@ -5,7 +5,7 @@ import { Tournament } from '../tournament.schema';
 import {ROLES} from "../../auth/roles";
 
 @Injectable()
-export class IsCreatorGuard implements CanActivate {
+export class IsTournamentCreatorGuard implements CanActivate {
     constructor(@InjectModel(Tournament.name) private tournamentModel: Model<Tournament>) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {

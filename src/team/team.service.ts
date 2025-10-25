@@ -17,7 +17,7 @@ export class TeamService {
       private readonly userService: UserService,
   ) {}
 
-  async create(createTeamDto: CreateTeamDto, tournament: Types.ObjectId): Promise<Team> {
+  async create(createTeamDto: CreateTeamDto, tournament: Types.ObjectId, captainId: Types.ObjectId): Promise<Team> {
     const { players, name } = createTeamDto;
 
     const uniqPlayers = Array.from(new Set(players.map(p => p.toString())));
@@ -29,6 +29,10 @@ export class TeamService {
       await Promise.all(players.map(id => this.userService.findById(id.toString())));
     } catch (err) {
       throw new BadRequestException('Alcuni giocatori inseriti non esistono');
+    }
+
+    if (!players.map(p => p.toString()).includes(captainId.toString())) {
+      players.push(captainId);
     }
 
     const existingTeams = await this.teamModel.find({
@@ -46,7 +50,7 @@ export class TeamService {
     }
 
     try {
-      const team = new this.teamModel({...createTeamDto, tournament});
+      const team = new this.teamModel({...createTeamDto, tournament, captain: captainId});
       return await team.save();
     } catch (error) {
       if (error.code === 11000) {
@@ -56,20 +60,17 @@ export class TeamService {
     }
   }
 
-
   // 🔹 GET ALL
   async findAllByTournament(tournamentId: string): Promise<Team[]> {
-    return this.teamModel
-        .find({ tournament: tournamentId })
-        .populate('players', 'username email')
-        .exec();
+    if (!Types.ObjectId.isValid(tournamentId)) return [];
+    return this.teamModel.find({ tournament: new Types.ObjectId(tournamentId) }).exec();
   }
 
   // 🔹 GET ONE
-  async findOne(tournamentId: string, id: string): Promise<Team> {
+  async findOne(id: string): Promise<Team> {
     const team = await this.teamModel
-        .findOne({ _id: id, tournament: tournamentId })
-        .populate('players', 'username email')
+        .findOne({ _id: new Types.ObjectId(id) })
+        .populate('players', 'name email')
         .exec();
 
     if (!team) throw new NotFoundException('Team non trovato');
@@ -77,8 +78,16 @@ export class TeamService {
   }
 
   // 🔹 UPDATE
-  async update(id: Types.ObjectId, updateDto: any, tournament: Types.ObjectId): Promise<Team> {
+  async update(id: Types.ObjectId, updateDto: any, captainId: Types.ObjectId): Promise<Team> {
     const { players } = updateDto;
+
+    const existingTeam = await this.teamModel.findById(id);
+    if (!existingTeam) throw new NotFoundException('Team non trovato');
+    const tournament = existingTeam.tournament;
+
+    if (!players.map(p => p.toString()).includes(captainId.toString())) {
+      players.push(captainId);
+    }
 
     if (players && players.length > 0) {
       const uniqPlayers = Array.from(new Set(players.map(p => p.toString())));
@@ -120,10 +129,9 @@ export class TeamService {
   }
 
 
-  async remove(tournamentId: string, id: string): Promise<{ message: string }> {
+  async remove(id: string): Promise<{ message: string }> {
     const res = await this.teamModel.deleteOne({
-      _id: id,
-      tournament: tournamentId,
+      _id: new Types.ObjectId(id)
     });
 
     if (res.deletedCount === 0) {
