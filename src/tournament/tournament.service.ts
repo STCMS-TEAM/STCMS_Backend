@@ -55,8 +55,11 @@ export class TournamentService {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.tournamentModel.findByIdAndDelete(id).exec();
-    if (!result) throw new NotFoundException('Tournament not found');
+    const tournament = await this.tournamentModel.findById(id);
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+    await tournament.deleteOne();
   }
 
 

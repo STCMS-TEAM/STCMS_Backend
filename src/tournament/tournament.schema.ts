@@ -43,3 +43,18 @@ TournamentSchema.virtual('matches', {
 // Abilita `virtuals` nel toJSON / toObject
 TournamentSchema.set('toJSON', { virtuals: true });
 TournamentSchema.set('toObject', { virtuals: true });
+
+TournamentSchema.pre('deleteOne', { document: true, query: false }, async function() {
+    const tournamentId = this._id;
+    const tournamentModel = this.constructor as any;
+
+    // Elimina tutti i team del torneo
+    const teamResult = await tournamentModel.db.model('Team').deleteMany({
+        tournament: tournamentId
+    });
+
+    // Elimina tutte le partite del torneo
+    const matchResult = await tournamentModel.db.model('Match').deleteMany({
+        tournament: tournamentId
+    });
+});

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import {Document, Model, Query, Types} from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 @Schema({ timestamps: true })
@@ -57,3 +57,23 @@ UserSchema.virtual('teams', {
 // Abilita `virtuals` nel toJSON / toObject
 UserSchema.set('toJSON', { virtuals: true });
 UserSchema.set('toObject', { virtuals: true });
+
+
+UserSchema.pre('deleteOne', { document: true, query: false }, async function() {
+    const userId = this._id;
+
+    const tournaments = await this.model('Tournament').find({ createdBy: userId });
+    for (const tournament of tournaments) {
+        await tournament.deleteOne();
+    }
+
+    await this.model('Team').updateMany(
+        { captain: userId },
+        { $unset: { captain: "" } }
+    );
+
+    await this.model('Team').updateMany(
+        { players: userId },
+        { $pull: { players: userId } }
+    );
+});

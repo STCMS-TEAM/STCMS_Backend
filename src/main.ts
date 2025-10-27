@@ -13,8 +13,8 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Spike stream')
-    .setDescription('Spike stream: stream your match with the score')
+    .setTitle('STCMS')
+    .setDescription('STCMS backend')
     .setVersion('1.0')
     .addBasicAuth(
       {
