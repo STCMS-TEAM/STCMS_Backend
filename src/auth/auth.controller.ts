@@ -29,6 +29,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import {CreateUserDto} from "../user/dto/create-user";
+import {User} from "../user/user.schema";
+import {ROLES} from "./roles";
 
 @Controller('auth')
 @ApiTags('Authentication') // Gruppo di endpoint per l'autenticazione
@@ -39,6 +42,11 @@ export class AuthController {
     private authService: AuthService,
   ) {
     this.URL = this._configService.get<string>('URL');
+  }
+
+  @Post('register')
+  async create(@Body() body: CreateUserDto): Promise<any> {
+    return this.authService.registerUser(body);
   }
 
   @Get('login')

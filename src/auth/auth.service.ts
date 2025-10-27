@@ -1,6 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
+import {ROLES} from "./roles";
+import {CreateUserDto} from "../user/dto/create-user";
 
 @Injectable()
 export class AuthService {
@@ -13,6 +15,11 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
     if(user && user.matchPassword(password)) return user;
     throw new UnauthorizedException('Invalid credentials');
+  }
+
+  async registerUser(body: CreateUserDto) {
+    const user = await this.userService.create({ ...body, type_user: ROLES.DEFAULT });
+    return this.login(user.email, user.password);
   }
 
   async login(email: string, password: string) {
