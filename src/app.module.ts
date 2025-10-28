@@ -30,7 +30,7 @@ import {AuthModule} from "./auth/auth.module";
       TournamentModule,
       TeamModule,
       MatchModule,
-      TestModule
+      //TestModule
   ],
   controllers: [AppController],
   providers: [AppService],

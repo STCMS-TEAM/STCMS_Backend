@@ -8,6 +8,7 @@ import {CreateTeamDto} from "../team/dto/create-team";
 import {Types} from "mongoose";
 import {TeamService} from "../team/team.service";
 import {ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags} from "@nestjs/swagger";
+import {UpdateTournamentDto} from "./dto/update-tournament";
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -81,7 +82,7 @@ export class TournamentController {
   @ApiOperation({ summary: 'Update a tournament' })
   @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiResponse({ status: 200, description: 'Tournament updated successfully.' })
-  async update(@Param('id') id: string, @Body() body: any): Promise<Tournament> {
+  async update(@Param('id') id: string, @Body() body: UpdateTournamentDto): Promise<Tournament> {
     return this.tournamentService.update(id, body);
   }
 

@@ -10,7 +10,6 @@ export class CreateTeamDto {
 
     @ApiProperty({ example: ['64f1c1e8e3a0f123456789ab'], description: 'Array di ID dei giocatori' })
     @IsArray()
-    @ArrayNotEmpty()
     @IsMongoId({ each: true })
     players: Types.ObjectId[];
 }

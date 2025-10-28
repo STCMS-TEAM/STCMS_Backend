@@ -32,6 +32,7 @@ import { ConfigService } from '@nestjs/config';
 import {CreateUserDto} from "../user/dto/create-user";
 import {User} from "../user/user.schema";
 import {ROLES} from "./roles";
+import {LoginDto} from "./dto/login";
 
 @Controller('auth')
 @ApiTags('Authentication') // Gruppo di endpoint per l'autenticazione
@@ -49,41 +50,32 @@ export class AuthController {
     return this.authService.registerUser(body);
   }
 
-  @Get('login')
+  @Post('login')
   @ApiOperation({
     summary: 'Login utente',
-    description: 'Supporta un metodo di autenticazione: Basic Auth (email:password)'
+    description: 'Effettua il login inviando email e password nel body',
   })
-  @ApiHeader({
-    name: 'authorization',
-    description: 'Credenziali Basic Auth (formato: "Basic base64(email:password)")',
-    required: false
+  @ApiOkResponse({
+    description: 'Autenticazione riuscita, restituisce il token JWT',
+    schema: {
+      example: {
+        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      },
+    },
   })
-  @ApiOkResponse({ description: 'Autenticazione riuscita, restituisce il token JWT' })
-  @ApiBadRequestResponse({ description: 'Formato delle credenziali non valido' })
-  @ApiUnauthorizedResponse({ description: 'Metodo di autenticazione non valido o credenziali errate' })
-  async login(@Headers() headers: string) {
-    const authHeader = headers["authorization"];
+  @ApiBadRequestResponse({ description: 'Email o password mancanti o non validi' })
+  @ApiUnauthorizedResponse({ description: 'Credenziali errate' })
+  async login(@Body() loginDto: LoginDto) {
+    const { email, password } = loginDto;
 
-    if (authHeader != undefined) {
-      const base64Credentials = authHeader.split(' ')[1];
-
-      if (!base64Credentials) {
-        throw new HttpException('Invalid Authorization header format', HttpStatus.BAD_REQUEST);
-      }
-
-      const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-      const [email, password] = credentials.split(':');
-
-      if (!email || !password) {
-        throw new HttpException('Invalid credentials format', HttpStatus.BAD_REQUEST);
-      }
-
-      return this.authService.login(email, password);
+    if (!email || !password) {
+      throw new HttpException('Email and password are required', HttpStatus.BAD_REQUEST);
     }
 
-    throw new UnauthorizedException('Invalid authentication method');
+    return this.authService.login(email, password);
   }
+
 
   @Post('refresh')
   @ApiOperation({

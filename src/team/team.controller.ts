@@ -15,6 +15,7 @@ import {Types} from "mongoose";
 import {IsTeamCaptain} from "./guards/is-team-captain";
 import {ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {Team} from "./team.schema";
+import {UpdateTeamDto} from "./dto/update-team";
 
 @ApiTags('Teams')
 @Controller('teams')
@@ -36,7 +37,7 @@ export class TeamController {
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiResponse({ status: 200, description: 'Team updated successfully.' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async update(@Param('id') id: string, @Body() updateTeamDto: any, @Req() req) {
+  async update(@Param('id') id: string, @Body() updateTeamDto: UpdateTeamDto, @Req() req) {
     return this.teamService.update(new Types.ObjectId(id), updateTeamDto, new Types.ObjectId(req.user.id));
   }
 
