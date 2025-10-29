@@ -56,7 +56,7 @@ export class AuthService {
       }
 
       const user = await this.userService.findByEmail(decoded.email);
-      if (!user) throw new UnauthorizedException('User not found');
+      if(user && !user.isActive) throw new UnauthorizedException('User not found');
 
       const payload = {
         id: user.id,

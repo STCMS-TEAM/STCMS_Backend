@@ -36,11 +36,13 @@ export class UserService {
     };
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.userModel
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userModel
       .findOne({ email })
       .populate('tournamentsCreated')
       .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   async findById(id: string): Promise<User> {
