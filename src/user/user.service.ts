@@ -71,10 +71,11 @@ export class UserService {
   }
 
   async remove(id: string): Promise<void> {
-    const user = await this.userModel.findById(id);
+    const user = await this.userModel.findByIdAndUpdate(id, {
+      isActive: false
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    await user.deleteOne();
   }
 }

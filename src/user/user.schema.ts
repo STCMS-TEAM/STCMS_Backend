@@ -19,11 +19,14 @@ export class User extends Document {
     @Prop({ required: true, minlength: 6 })
     password: string;
 
+    @Prop({ type: Date, required: true })
+    birthDate: Date;
+
     @Prop({ enum: ['male', 'female', 'other'] })
     gender: string;
 
-    @Prop()
-    phone_number: string;
+    @Prop({ default: true })
+    isActive: boolean;
 
     matchPassword: Function;
 }

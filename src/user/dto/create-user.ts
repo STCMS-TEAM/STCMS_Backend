@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {IsDateString, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength} from 'class-validator';
 
 export class CreateUserDto {
     @ApiProperty({ example: 'Leonardo', description: 'Nome dell’utente' })
@@ -31,4 +31,12 @@ export class CreateUserDto {
     @IsString()
     @IsOptional()
     phone_number?: string;
+
+    @ApiPropertyOptional({
+        example: '1998-04-12',
+        description: 'Data di nascita dell’utente (formato ISO: YYYY-MM-DD)',
+    })
+    @IsDateString()
+    @IsOptional()
+    birthDate?: string;
 }

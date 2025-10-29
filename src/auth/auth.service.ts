@@ -13,7 +13,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
-    if(user && user.matchPassword(password)) return user;
+    if(user && user.matchPassword(password) && user.isActive) return user;
     throw new UnauthorizedException('Invalid credentials');
   }
 
