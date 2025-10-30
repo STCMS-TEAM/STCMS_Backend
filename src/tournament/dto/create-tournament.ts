@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
+import {SPORTS, SportType} from "../../match/sports";
 
 export class CreateTournamentDto {
     @ApiProperty({ example: 'Campionato 2025', description: 'Nome del torneo' })
@@ -22,4 +23,8 @@ export class CreateTournamentDto {
     @ApiProperty({ example: 'single_elimination', enum: ['single_elimination', 'double_elimination', 'round_robin'], description: 'Tipo di torneo' })
     @IsEnum(['single_elimination', 'double_elimination', 'round_robin'])
     type: 'single_elimination' | 'double_elimination' | 'round_robin';
+
+    @ApiProperty({ example: 'soccer', enum: Object.keys(SPORTS), description: 'Sport del torneo' })
+    @IsEnum(Object.keys(SPORTS) as SportType[])
+    sport: SportType;
 }

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import {SPORTS, SportType} from "../match/sports";
 
 @Schema({ timestamps: true })
 export class Tournament extends Document {
@@ -23,6 +24,13 @@ export class Tournament extends Document {
         default: 'single_elimination',
     })
     type: string;
+
+    @Prop({
+        type: String,
+        required: true,
+        enum: Object.keys(SPORTS),
+    })
+    sport: SportType;
 
 }
 

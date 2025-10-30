@@ -9,6 +9,8 @@ import {Types} from "mongoose";
 import {TeamService} from "../team/team.service";
 import {ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {UpdateTournamentDto} from "./dto/update-tournament";
+import {MatchService} from "../match/match.service";
+import {CreateMatchDto} from "../match/dto/create-match";
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -16,6 +18,7 @@ export class TournamentController {
   constructor(
       private readonly tournamentService: TournamentService,
       private readonly teamService: TeamService,
+      private readonly matchService: MatchService,
   ) {}
 
   @Get()
@@ -39,6 +42,13 @@ export class TournamentController {
   @ApiResponse({ status: 200, description: 'List of teams returned successfully.' })
   async findAll(@Param('id') tournamentId: string) {
     return this.teamService.findAllByTournament(tournamentId);
+  }
+
+  @Get(':id/matches')
+  @ApiOperation({ summary: 'Ottiene tutti i match di un torneo' })
+  @ApiParam({ name: 'id', type: String })
+  async findAllByTournament(@Param('id') tournamentId: string) {
+    return this.matchService.getMatchesByTournament(tournamentId);
   }
 
   @Post()
@@ -74,6 +84,27 @@ export class TournamentController {
       }
       throw error;
     }
+  }
+
+  @Post(':tournamentId/matches')
+  //@UseGuards(JwtAuthGuard, IsTournamentCreatorGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crea un nuovo match per un torneo' })
+  @ApiParam({ name: 'tournamentId', type: String })
+  @ApiResponse({ status: 201, description: 'Match creato con successo' })
+  @ApiResponse({ status: 404, description: 'Torneo non trovato' })
+  async createMatch(
+      @Param('tournamentId') tournamentId: string,
+      @Body() dto: CreateMatchDto,
+  ) {
+    if (!dto.teams || dto.teams.length < 2) {
+      throw new BadRequestException('Almeno due squadre sono obbligatorie');
+    }
+
+    console.log("Ok");
+
+    const teams = dto.teams.map((t) => new Types.ObjectId(t));
+    return this.matchService.createMatch(tournamentId, teams);
   }
 
   @Patch(':id')

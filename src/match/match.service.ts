@@ -1,9 +1,95 @@
-import { Injectable } from '@nestjs/common';
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
-import {Model} from "mongoose";
+import {Model, Types} from "mongoose";
 import {Match} from "./match.schema";
+import {TournamentService} from "../tournament/tournament.service";
+import {SPORTS} from "./sports";
 
 @Injectable()
 export class MatchService {
-  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>) {}
+  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService,) {}
+
+  async createMatch(tournamentId: string, teams: Types.ObjectId[]) {
+    const tournament = await this.tournamentService.findById(tournamentId);
+    if (!tournament) throw new NotFoundException('Tournament not found');
+
+    const sportConfig = SPORTS[tournament.sport];
+    if (!sportConfig) throw new BadRequestException(`Unsupported sport: ${tournament.sport}`);
+
+    const result = sportConfig.createDefaultResult(teams.map(t => t.toString()));
+
+    const match = new this.matchModel({
+      tournament: tournamentId,
+      teams,
+      result,
+    });
+
+    return match.save();
+  }
+
+
+  /**
+   * Ritorna tutte le partite di un torneo
+   */
+  async getMatchesByTournament(tournamentId: string) {
+    return this.matchModel
+        .find({ tournament: tournamentId })
+        .populate('teams')
+        .populate('tournament')
+        .exec();
+  }
+
+  /**
+   * Ritorna un match singolo
+   */
+  async getMatchById(matchId: string) {
+    const match = await this.matchModel
+        .findById(matchId)
+        .populate('tournament')
+        .populate('teams')
+        .exec();
+    if (!match) throw new NotFoundException('Match not found');
+    return match;
+  }
+
+  /**
+   * Aggiorna il risultato della partita
+   * Valida la struttura del risultato in base allo sport
+   */
+  async updateResult(matchId: string, newResult: any) {
+    const match = await this.matchModel.findById(matchId);
+    if (!match) throw new NotFoundException('Match not found');
+
+    const tournament = await this.tournamentService.findById(match.tournament.toString());
+    if (!tournament) throw new NotFoundException('Tournament not found');
+
+    const sportConfig = SPORTS[tournament.sport];
+    if (!sportConfig) throw new BadRequestException(`Unsupported sport: ${tournament.sport}`);
+
+    if (sportConfig.validate) {
+      sportConfig.validate(newResult);
+    }
+
+    match.result = newResult;
+    return match.save();
+  }
+
+  /**
+   * Aggiorna lo stato (pending/live/completed)
+   */
+  async updateStatus(matchId: string, status: 'pending' | 'live' | 'completed') {
+    const match = await this.matchModel.findById(matchId);
+    if (!match) throw new NotFoundException('Match not found');
+    match.status = status;
+    return await match.save();
+  }
+
+  /**
+   * Elimina una partita
+   */
+  async deleteMatch(matchId: string) {
+    const match = await this.matchModel.findByIdAndDelete(matchId);
+    if (!match) throw new NotFoundException('Match not found');
+    return { message: 'Match deleted successfully' };
+  }
 }
