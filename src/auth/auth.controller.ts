@@ -14,6 +14,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   ApiBadRequestResponse,
@@ -29,10 +30,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import {CreateUserDto} from "../user/dto/create-user";
-import {User} from "../user/user.schema";
-import {ROLES} from "./roles";
-import {LoginDto} from "./dto/login";
+import { CreateUserDto } from '../user/dto/create-user';
+import { User } from '../user/user.schema';
+import { ROLES } from './roles';
+import { LoginDto } from './dto/login';
 
 @Controller('auth')
 @ApiTags('Authentication') // Gruppo di endpoint per l'autenticazione
@@ -64,38 +65,80 @@ export class AuthController {
       },
     },
   })
-  @ApiBadRequestResponse({ description: 'Email o password mancanti o non validi' })
+  @ApiBadRequestResponse({
+    description: 'Email o password mancanti o non validi',
+  })
   @ApiUnauthorizedResponse({ description: 'Credenziali errate' })
-  async login(@Body() loginDto: LoginDto) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response, // inject Express response
+  ) {
     const { email, password } = loginDto;
 
     if (!email || !password) {
-      throw new HttpException('Email and password are required', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Email and password are required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    return this.authService.login(email, password);
-  }
+    const { tokens, user } = await this.authService.login(email, password);
 
+    // Set refresh token in HttpOnly cookie
+    res.cookie('refreshToken', tokens.refresh_token, {
+      httpOnly: true,
+      secure: true, // set to true in production (HTTPS)
+      sameSite: 'none', // adjust if frontend is on a different domain
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return access token + user info
+    return {
+      accessToken: tokens.access_token,
+      user,
+      expiresIn: tokens.expires_in,
+    };
+  }
 
   @Post('refresh')
   @ApiOperation({
     summary: 'Refresh token JWT',
-    description: 'Genera un nuovo access token usando un refresh token valido'
+    description: 'Genera un nuovo access token usando un refresh token valido',
   })
   @ApiHeader({
     name: 'authorization',
     description: 'Refresh token (formato: "Bearer refresh_token")',
-    required: true
+    required: true,
   })
   @ApiOkResponse({ description: 'Nuovo access token generato con successo' })
-  @ApiBadRequestResponse({ description: 'Header Authorization mancante o malformato' })
-  @ApiUnauthorizedResponse({ description: 'Refresh token non valido o scaduto' })
+  @ApiBadRequestResponse({
+    description: 'Header Authorization mancante o malformato',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token non valido o scaduto',
+  })
   async refresh(@Headers('authorization') authHeader: string) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new HttpException('Invalid authorization header', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Invalid authorization header',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const refreshToken = authHeader.split(' ')[1];
     return this.authService.refreshAccessToken(refreshToken);
+  }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+    });
+
+    return { message: 'Logged out successfully' };
   }
 }
