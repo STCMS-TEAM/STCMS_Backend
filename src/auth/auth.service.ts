@@ -31,23 +31,10 @@ export class AuthService {
     const payload = {
       id: user.id,
       email: user.email,
-      name: user.name,
-      last_name: user.last_name,
       type_user: user.type_user,
     };
 
-    const tokens = await this.generateTokens(payload);
-
-    return {
-      tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        last_name: user.last_name,
-        type_user: user.type_user,
-      },
-    };
+    return this.generateTokens(payload);
   }
 
   async generateTokens(payload: any) {
@@ -57,7 +44,7 @@ export class AuthService {
     });
     const refreshToken = this.jwtService.sign(
       { ...payload, token_type: 'refresh' },
-      { expiresIn: '1d' },
+      { expiresIn: '7d' },
     );
 
     return {
@@ -81,8 +68,6 @@ export class AuthService {
       const payload = {
         id: user.id,
         email: user.email,
-        name: user.name,
-        last_name: user.last_name,
         type_user: user.type_user,
       };
 

@@ -31,8 +31,6 @@ import {
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '../user/dto/create-user';
-import { User } from '../user/user.schema';
-import { ROLES } from './roles';
 import { LoginDto } from './dto/login';
 
 @Controller('auth')
@@ -82,10 +80,10 @@ export class AuthController {
       );
     }
 
-    const { tokens, user } = await this.authService.login(email, password);
+    const token = await this.authService.login(email, password);
 
     // Set refresh token in HttpOnly cookie
-    res.cookie('refreshToken', tokens.refresh_token, {
+    res.cookie('refreshToken', token.refresh_token, {
       httpOnly: true,
       secure: true, // set to true in production (HTTPS)
       sameSite: 'none', // adjust if frontend is on a different domain
@@ -95,9 +93,8 @@ export class AuthController {
 
     // Return access token + user info
     return {
-      accessToken: tokens.access_token,
-      user,
-      expiresIn: tokens.expires_in,
+      accessToken: token.access_token,
+      expiresIn: token.expires_in,
     };
   }
 
@@ -106,28 +103,31 @@ export class AuthController {
     summary: 'Refresh token JWT',
     description: 'Genera un nuovo access token usando un refresh token valido',
   })
-  @ApiHeader({
-    name: 'authorization',
-    description: 'Refresh token (formato: "Bearer refresh_token")',
-    required: true,
-  })
   @ApiOkResponse({ description: 'Nuovo access token generato con successo' })
-  @ApiBadRequestResponse({
-    description: 'Header Authorization mancante o malformato',
-  })
   @ApiUnauthorizedResponse({
     description: 'Refresh token non valido o scaduto',
   })
-  async refresh(@Headers('authorization') authHeader: string) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new HttpException(
-        'Invalid authorization header',
-        HttpStatus.BAD_REQUEST,
-      );
+  async refresh(@Req() req, @Res({ passthrough: true }) res) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      throw new HttpException('Missing refresh token', HttpStatus.BAD_REQUEST);
     }
+    const token = await this.authService.refreshAccessToken(refreshToken);
 
-    const refreshToken = authHeader.split(' ')[1];
-    return this.authService.refreshAccessToken(refreshToken);
+    // Set refresh token in HttpOnly cookie
+    res.cookie('refreshToken', token.refresh_token, {
+      httpOnly: true,
+      secure: true, // set to true in production (HTTPS)
+      sameSite: 'none', // adjust if frontend is on a different domain
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return access token + user info
+    return {
+      accessToken: token.access_token,
+      expiresIn: token.expires_in,
+    };
   }
 
   @Post('logout')
