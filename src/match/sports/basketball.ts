@@ -1,26 +1,27 @@
+import { Types } from 'mongoose';
+
+export interface BasketballResult {
+    score: Record<string, number>;               // punti totali
+    partials: { [teamId: string]: number }[];   // punti per quarto
+}
+
 export const basketball = {
     name: 'basketball',
 
-    defaultResult: {
-        quarters: [],
-        finalScore: {},
-        playerStats: [],
-    },
+    createDefaultResult(teams: string[]): BasketballResult {
+        const score: Record<string, number> = {};
+        teams.forEach(team => (score[team] = 0));
 
-    createDefaultResult(teams: string[]) {
-        return {
-            quarters: [
-                { [teams[0]]: 0, [teams[1]]: 0 },
-                { [teams[0]]: 0, [teams[1]]: 0 },
-                { [teams[0]]: 0, [teams[1]]: 0 },
-                { [teams[0]]: 0, [teams[1]]: 0 },
-            ],
-            finalScore: { [teams[0]]: 0, [teams[1]]: 0 },
-            playerStats: [],
-        };
+        const partials = Array(4).fill(null).map(() => ({
+            [teams[0]]: 0,
+            [teams[1]]: 0,
+        }));
+
+        return { score, partials };
     },
 
     validate(result: any) {
-        if (!result.finalScore) throw new Error('Basketball result must include finalScore');
+        if (!result?.score || !Array.isArray(result?.partials))
+            throw new Error('Basketball result must include score and partials');
     },
 };

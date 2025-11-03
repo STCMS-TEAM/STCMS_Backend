@@ -113,7 +113,6 @@ export class TournamentController {
     if (!dto.teams || dto.teams.length < 2) {
       throw new BadRequestException('Almeno due squadre sono obbligatorie');
     }
-
     const teams = dto.teams.map((t) => new Types.ObjectId(t));
     return this.matchService.createMatch(tournamentId, teams);
   }

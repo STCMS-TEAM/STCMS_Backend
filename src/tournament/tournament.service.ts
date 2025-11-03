@@ -17,7 +17,7 @@ export class TournamentService {
         .exec();
   }
 
-  async findById(id: string): Promise<Tournament> {
+  async findById(id: string): Promise<any> {
     const tournament = await this.tournamentModel
         .findById(id)
         .populate('createdBy', 'name last_name email')

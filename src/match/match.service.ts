@@ -13,6 +13,12 @@ export class MatchService {
     const tournament = await this.tournamentService.findById(tournamentId);
     if (!tournament) throw new NotFoundException('Tournament not found');
 
+    const tournamentTeamIds = tournament.teams.map(t => t._id.toString());
+    const invalidTeams = teams.filter(t => !tournamentTeamIds.includes(t.toString()));
+    if (invalidTeams.length > 0) {
+      throw new BadRequestException('Alcune squadre non appartengono a questo torneo');
+    }
+
     const sportConfig = SPORTS[tournament.sport];
     if (!sportConfig) throw new BadRequestException(`Unsupported sport: ${tournament.sport}`);
 
@@ -26,7 +32,6 @@ export class MatchService {
 
     return match.save();
   }
-
 
   /**
    * Ritorna tutte le partite di un torneo

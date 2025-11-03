@@ -1,8 +1,8 @@
-import { soccer } from './soccer';
-import { basketball } from './basketball';
-import { volleyball } from './volleyball';
-import { cycling } from './cycling';
-import { athletics } from './athletics';
+import {soccer, SoccerResult} from './soccer';
+import {basketball, BasketballResult} from './basketball';
+import {volleyball, VolleyballResult} from './volleyball';
+import {cycling, CyclingResult} from './cycling';
+import {athletics, AthleticsResult} from './athletics';
 
 export const SPORTS = {
     soccer,
@@ -13,3 +13,13 @@ export const SPORTS = {
 };
 
 export type SportType = keyof typeof SPORTS;
+
+export type MatchResultMap = {
+    soccer: SoccerResult;
+    volleyball: VolleyballResult;
+    basketball: BasketballResult;
+    cycling: CyclingResult;
+    athletics: AthleticsResult;
+};
+
+export type MatchResult = MatchResultMap[SportType];

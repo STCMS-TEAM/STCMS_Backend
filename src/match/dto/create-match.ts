@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, ArrayMinSize, IsMongoId } from 'class-validator';
+import {IsArray, ArrayMinSize, IsMongoId, ArrayUnique} from 'class-validator';
 
 export class CreateMatchDto {
     @ApiProperty({
@@ -8,6 +8,7 @@ export class CreateMatchDto {
         example: ['64f1c5b3f7e7d5b1b8c9d123', '64f1c5b3f7e7d5b1b8c9d456'],
     })
     @IsArray()
+    @ArrayUnique()
     @ArrayMinSize(2)
     @IsMongoId({ each: true })
     teams: string[];

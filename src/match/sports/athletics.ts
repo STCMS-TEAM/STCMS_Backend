@@ -1,13 +1,23 @@
+import { Types } from 'mongoose';
+
+export interface AthleticsResultEntry {
+    userId: string;
+    performance: number; // tempo o distanza
+}
+
+export interface AthleticsResult {
+    ranking: AthleticsResultEntry[];
+}
+
 export const athletics = {
     name: 'athletics',
-    defaultResult: {
-        ranking: [],
-        unit: 'seconds',
+
+    createDefaultResult(teams: string[]): AthleticsResult {
+        return { ranking: [] };
     },
-    createDefaultResult(teams: string[]) {
-        return this.defaultResult
-    },
+
     validate(result: any) {
-        if (!Array.isArray(result.ranking)) throw new Error('Athletics result must include ranking');
+        if (!Array.isArray(result?.ranking))
+            throw new Error('Athletics result must include ranking');
     },
 };
