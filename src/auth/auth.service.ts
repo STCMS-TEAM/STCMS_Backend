@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { ROLES } from './roles';
 import { CreateUserDto } from '../user/dto/create-user';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +36,16 @@ export class AuthService {
     };
 
     return this.generateTokens(payload);
+  }
+
+  setCookieRefreshToken(res: Response, token: string) {
+    res.cookie('refreshToken', token, {
+      httpOnly: true,
+      secure: true, // set to true in production (HTTPS)
+      sameSite: 'none', // adjust if frontend is on a different domain
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
   }
 
   async generateTokens(payload: any) {

@@ -45,8 +45,13 @@ export class AuthController {
   }
 
   @Post('register')
-  async create(@Body() body: CreateUserDto): Promise<any> {
-    return this.authService.registerUser(body);
+  async create(@Body() body: CreateUserDto, @Res({ passthrough: true }) res: Response,): Promise<any> {
+    const token = await this.authService.registerUser(body);
+    this.authService.setCookieRefreshToken(res, token.refresh_token);
+    return {
+      accessToken: token.access_token,
+      expiresIn: token.expires_in,
+    };
   }
 
   @Post('login')
@@ -82,16 +87,8 @@ export class AuthController {
 
     const token = await this.authService.login(email, password);
 
-    // Set refresh token in HttpOnly cookie
-    res.cookie('refreshToken', token.refresh_token, {
-      httpOnly: true,
-      secure: true, // set to true in production (HTTPS)
-      sameSite: 'none', // adjust if frontend is on a different domain
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    this.authService.setCookieRefreshToken(res, token.refresh_token);
 
-    // Return access token + user info
     return {
       accessToken: token.access_token,
       expiresIn: token.expires_in,
@@ -114,14 +111,7 @@ export class AuthController {
     }
     const token = await this.authService.refreshAccessToken(refreshToken);
 
-    // Set refresh token in HttpOnly cookie
-    res.cookie('refreshToken', token.refresh_token, {
-      httpOnly: true,
-      secure: true, // set to true in production (HTTPS)
-      sameSite: 'none', // adjust if frontend is on a different domain
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    this.authService.setCookieRefreshToken(res, token.refresh_token);
 
     // Return access token + user info
     return {
