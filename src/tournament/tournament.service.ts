@@ -8,9 +8,9 @@ import {TeamService} from "../team/team.service";
 export class TournamentService {
   constructor(@InjectModel(Tournament.name) private tournamentModel: Model<Tournament>) {}
 
-  async findAll(): Promise<Tournament[]> {
+  async findAll(sport?: string): Promise<Tournament[]> {
     return this.tournamentModel
-        .find()
+        .find(sport ? { sport } : {})
         .populate('createdBy', 'name last_name email')  // popola il creator
         .populate('teams')                             // popola i team
         .populate('matches')                           // popola le partite

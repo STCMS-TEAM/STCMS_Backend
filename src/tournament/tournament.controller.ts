@@ -1,4 +1,16 @@
-import {BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards} from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards
+} from '@nestjs/common';
 import { TournamentService } from './tournament.service';
 import { Tournament } from './tournament.schema';
 import {JwtAuthGuard} from "../auth/auth.guard";
@@ -7,7 +19,7 @@ import {IsTournamentCreatorGuard} from "./guards/is-tournament-creator";
 import {CreateTeamDto} from "../team/dto/create-team";
 import {Types} from "mongoose";
 import {TeamService} from "../team/team.service";
-import {ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags} from "@nestjs/swagger";
+import {ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {UpdateTournamentDto} from "./dto/update-tournament";
 import {MatchService} from "../match/match.service";
 import {CreateMatchDto} from "../match/dto/create-match";
@@ -24,8 +36,9 @@ export class TournamentController {
   @Get()
   @ApiOperation({ summary: 'Get all tournaments' })
   @ApiResponse({ status: 200, description: 'List of tournaments returned successfully.' })
-  async getAll(): Promise<Tournament[]> {
-    return this.tournamentService.findAll();
+  @ApiQuery({ name: 'sport', required: false, type: String, description: 'Filter tournaments by sport' })
+  async getAll(@Query('sport') sport?: string): Promise<Tournament[]> {
+    return this.tournamentService.findAll(sport);
   }
 
   @Get(':id')
@@ -100,8 +113,6 @@ export class TournamentController {
     if (!dto.teams || dto.teams.length < 2) {
       throw new BadRequestException('Almeno due squadre sono obbligatorie');
     }
-
-    console.log("Ok");
 
     const teams = dto.teams.map((t) => new Types.ObjectId(t));
     return this.matchService.createMatch(tournamentId, teams);
