@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {IsMongoId, IsNotEmpty, IsString, IsArray, ArrayNotEmpty, ArrayUnique} from 'class-validator';
+import {IsMongoId, IsNotEmpty, IsString, IsArray, ArrayNotEmpty, ArrayUnique, IsEmail} from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateTeamDto {
@@ -8,9 +8,9 @@ export class CreateTeamDto {
     @IsNotEmpty()
     name: string;
 
-    @ApiProperty({ example: ['64f1c1e8e3a0f123456789ab'], description: 'Array di ID dei giocatori' })
+    @ApiProperty({ example: ['user@email.com'], description: 'Array di email dei giocatori' })
     @IsArray()
     @ArrayUnique()
-    @IsMongoId({ each: true })
-    players: Types.ObjectId[];
+    @IsString({ each: true })
+    players: string[];
 }

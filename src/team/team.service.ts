@@ -17,40 +17,59 @@ export class TeamService {
       private readonly userService: UserService,
   ) {}
 
-  async create(createTeamDto: CreateTeamDto, tournament: Types.ObjectId, captainId: Types.ObjectId): Promise<Team> {
-    const { players, name } = createTeamDto;
+  async create(
+      createTeamDto: CreateTeamDto,
+      tournament: Types.ObjectId,
+      captainId: Types.ObjectId
+  ): Promise<Team> {
+    const { players, name } = createTeamDto; // players = array di email
 
-    const uniqPlayers = Array.from(new Set(players.map(p => p.toString())));
+    // Rimuove eventuali duplicati (case-insensitive)
+    const uniqPlayers = Array.from(new Set(players.map(p => p.toLowerCase())));
     if (uniqPlayers.length !== players.length) {
       throw new BadRequestException('Uno stesso giocatore è stato inserito più volte nella squadra');
     }
 
-    try {
-      await Promise.all(players.map(id => this.userService.findById(id.toString())));
-    } catch (err) {
-      throw new BadRequestException('Alcuni giocatori inseriti non esistono');
+    // Trova tutti gli utenti tramite email
+    const users = await Promise.all(
+        players.map(async email => {
+          const user = await this.userService.findByEmail(email.toLowerCase());
+          if (!user) throw new BadRequestException(`L'utente con email ${email} non esiste`);
+          return user;
+        })
+    );
+
+    // Estrai solo gli ID degli utenti trovati
+    const playerIds = users.map(u => u.id.toString());
+
+    // Se il capitano non è già nella lista, aggiungilo
+    if (!playerIds.some(id => id.equals(captainId))) {
+      playerIds.push(captainId);
     }
 
-    if (!players.map(p => p.toString()).includes(captainId.toString())) {
-      players.push(captainId);
-    }
-
+    // Controlla se qualcuno dei giocatori è già in un'altra squadra dello stesso torneo
     const existingTeams = await this.teamModel.find({
       tournament,
-      players: { $in: players },
+      players: { $in: playerIds },
     });
 
     if (existingTeams.length > 0) {
       const playersInConflict = existingTeams
           .flatMap(t => t.players.map(p => p.toString()))
-          .filter(p => players.map(pl => pl.toString()).includes(p));
+          .filter(p => playerIds.map(id => id as string).includes(p));
       throw new BadRequestException(
-          `Alcuni giocatori sono già iscritti in altre squadre di questo torneo: ${playersInConflict.join(', ')}`,
+          `Alcuni giocatori sono già iscritti in altre squadre di questo torneo: ${playersInConflict.join(', ')}`
       );
     }
 
+    // Crea e salva la squadra
     try {
-      const team = new this.teamModel({...createTeamDto, tournament, captain: captainId});
+      const team = new this.teamModel({
+        name,
+        tournament,
+        captain: captainId,
+        players: playerIds,
+      });
       return await team.save();
     } catch (error) {
       if (error.code === 11000) {
@@ -59,6 +78,7 @@ export class TeamService {
       throw error;
     }
   }
+
 
   // 🔹 GET ALL
   async findAllByTournament(tournamentId: string): Promise<Team[]> {
