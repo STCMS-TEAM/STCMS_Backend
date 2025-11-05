@@ -7,6 +7,7 @@ export interface VolleyballResult {
 
 export const volleyball = {
     name: 'volleyball',
+    resultType: 'score' as const,
 
     createDefaultResult(teams: string[]): VolleyballResult {
         return {

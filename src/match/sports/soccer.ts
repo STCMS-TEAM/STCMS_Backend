@@ -6,6 +6,7 @@ export interface SoccerResult {
 
 export const soccer = {
     name: 'soccer',
+    resultType: 'score' as const,
 
     createDefaultResult(teams: string[]): SoccerResult {
         const score: Record<string, number> = {};

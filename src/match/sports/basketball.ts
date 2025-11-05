@@ -7,6 +7,7 @@ export interface BasketballResult {
 
 export const basketball = {
     name: 'basketball',
+    resultType: 'score' as const,
 
     createDefaultResult(teams: string[]): BasketballResult {
         const score: Record<string, number> = {};

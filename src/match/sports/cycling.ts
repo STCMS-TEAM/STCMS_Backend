@@ -11,6 +11,7 @@ export interface CyclingResult {
 
 export const cycling = {
     name: 'cycling',
+    resultType: 'ranking' as const,
 
     createDefaultResult(teams: string[]): CyclingResult {
         return { ranking: [] }; // si popolerà in base ai giocatori del team

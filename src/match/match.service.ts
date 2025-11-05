@@ -4,10 +4,11 @@ import {Model, Types} from "mongoose";
 import {Match} from "./match.schema";
 import {TournamentService} from "../tournament/tournament.service";
 import {SPORTS} from "./sports";
+import {TeamService} from "../team/team.service";
 
 @Injectable()
 export class MatchService {
-  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService,) {}
+  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService, private readonly teamService: TeamService) {}
 
   async createMatch(tournamentId: string, teams: Types.ObjectId[]) {
     const tournament = await this.tournamentService.findById(tournamentId);
@@ -44,6 +45,16 @@ export class MatchService {
         .exec();
   }
 
+  async getMatchSport(matchId: string) {
+    const match = await this.matchModel
+        .findById(matchId)
+        .populate('tournament', 'sport')
+        .exec();
+
+    if (!match) throw new NotFoundException('Match not found');
+    return match;
+  }
+
   /**
    * Ritorna un match singolo
    */
@@ -65,19 +76,39 @@ export class MatchService {
     const match = await this.matchModel.findById(matchId);
     if (!match) throw new NotFoundException('Match not found');
 
-    const tournament = await this.tournamentService.findById(match.tournament.toString());
-    if (!tournament) throw new NotFoundException('Tournament not found');
-
-    const sportConfig = SPORTS[tournament.sport];
-    if (!sportConfig) throw new BadRequestException(`Unsupported sport: ${tournament.sport}`);
-
-    if (sportConfig.validate) {
-      sportConfig.validate(newResult);
-    }
-
     match.result = newResult;
     return match.save();
   }
+
+  async updateScoreResult(match: Match, result: any) {
+    if (!result?.score || typeof result.score !== 'object') {
+      throw new BadRequestException('Invalid score format');
+    }
+
+    // Aggiorna solo i team esistenti
+    const updatedScore: Record<string, number> = {};
+    for (const teamId of match.teams.map(t => t.toString())) {
+      updatedScore[teamId] = result.score[teamId] ?? 0;
+    }
+
+    match.result = { score: updatedScore };
+    return match.save();
+  }
+
+  async updateRankingResult(match: Match, result: any) {
+    if (!Array.isArray(result?.ranking)) {
+      throw new BadRequestException('Invalid ranking format: must be an array');
+    }
+    const teamsPlayers =  (await Promise.all(match.teams.map(async teamId => await this.teamService.findOne(teamId.toString())))).map(team => team.players).flat();
+    const bSet = new Set(teamsPlayers.map(x => x._id.toString()));
+    console.log(bSet);
+    const allIncluded = result.ranking.every(x => bSet.has(x.userId));
+    if(!allIncluded) throw new BadRequestException('Invalid ranking format: every player must be in a subscribed team');
+
+    match.result = { ranking: result.ranking };
+    return match.save();
+  }
+
 
   /**
    * Aggiorna lo stato (pending/live/completed)

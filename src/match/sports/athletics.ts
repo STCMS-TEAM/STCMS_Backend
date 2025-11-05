@@ -11,6 +11,7 @@ export interface AthleticsResult {
 
 export const athletics = {
     name: 'athletics',
+    resultType: 'ranking' as const,
 
     createDefaultResult(teams: string[]): AthleticsResult {
         return { ranking: [] };
