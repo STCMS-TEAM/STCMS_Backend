@@ -2,16 +2,20 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsObject } from 'class-validator';
 
 export class VolleyballResultDto {
-    @ApiProperty({ example: { team1: 3, team2: 1 } })
+    @ApiProperty({
+        example: { '665a9f3dc2a8ab0012345678': 3, '665a9f3dc2a8ab0099999999': 1 },
+        description: 'Chiavi = ID dei team, valori = punteggi',
+    })
     @IsObject()
     score: Record<string, number>;
 
     @ApiProperty({
         example: [
-            { team1: 25, team2: 21 },
-            { team1: 23, team2: 25 },
-            { team1: 25, team2: 17 },
+            { '665a9f3dc2a8ab0012345678': 25, '665a9f3dc2a8ab0099999999': 21 },
+            { '665a9f3dc2a8ab0012345678': 23, '665a9f3dc2a8ab0099999999': 25 },
+            { '665a9f3dc2a8ab0012345678': 25, '665a9f3dc2a8ab0099999999': 17 },
         ],
+        description: 'Chiavi = ID dei team, valori = punteggi',
     })
     @IsArray()
     partials: Array<Record<string, number>>;

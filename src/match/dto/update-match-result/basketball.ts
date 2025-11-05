@@ -3,8 +3,8 @@ import { IsArray, IsObject } from 'class-validator';
 
 export class BasketballResultDto {
     @ApiProperty({
-        description: 'Punteggio totale per ogni squadra',
-        example: { team1: 87, team2: 86 },
+        description: 'Punteggio totale per ogni squadra. Chiavi = ID dei team, valori = punteggi',
+        example: { '665a9f3dc2a8ab0012345678': 87, '665a9f3dc2a8ab0099999999': 86 },
     })
     @IsObject()
     score: Record<string, number>;
@@ -12,10 +12,10 @@ export class BasketballResultDto {
     @ApiProperty({
         description: 'Punteggi parziali per ogni quarto o periodo',
         example: [
-            { team1: 25, team2: 20 },
-            { team1: 18, team2: 22 },
-            { team1: 24, team2: 19 },
-            { team1: 20, team2: 25 },
+            { '665a9f3dc2a8ab0012345678': 25, '665a9f3dc2a8ab0099999999': 20 },
+            { '665a9f3dc2a8ab0012345678': 18, '665a9f3dc2a8ab0099999999': 22 },
+            { '665a9f3dc2a8ab0012345678': 24, '665a9f3dc2a8ab0099999999': 19 },
+            { '665a9f3dc2a8ab0012345678': 20, '665a9f3dc2a8ab0099999999': 25 },
         ],
     })
     @IsArray()

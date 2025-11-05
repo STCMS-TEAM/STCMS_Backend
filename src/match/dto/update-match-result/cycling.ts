@@ -3,7 +3,7 @@ import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class CyclingEntryDto {
-    @ApiProperty({ example: 'user123' })
+    @ApiProperty({ example: '665a9f3dc2a8ab0012345678' })
     @IsString()
     userId: string;
 

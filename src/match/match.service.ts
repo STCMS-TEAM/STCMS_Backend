@@ -101,7 +101,6 @@ export class MatchService {
     }
     const teamsPlayers =  (await Promise.all(match.teams.map(async teamId => await this.teamService.findOne(teamId.toString())))).map(team => team.players).flat();
     const bSet = new Set(teamsPlayers.map(x => x._id.toString()));
-    console.log(bSet);
     const allIncluded = result.ranking.every(x => bSet.has(x.userId));
     if(!allIncluded) throw new BadRequestException('Invalid ranking format: every player must be in a subscribed team');
 
