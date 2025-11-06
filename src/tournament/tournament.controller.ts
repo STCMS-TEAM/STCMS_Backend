@@ -99,7 +99,7 @@ export class TournamentController {
     }
   }
 
-  @Post(':tournamentId/matches')
+  @Post(':id/matches')
   //@UseGuards(JwtAuthGuard, IsTournamentCreatorGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crea un nuovo match per un torneo' })
@@ -107,7 +107,7 @@ export class TournamentController {
   @ApiResponse({ status: 201, description: 'Match creato con successo' })
   @ApiResponse({ status: 404, description: 'Torneo non trovato' })
   async createMatch(
-      @Param('tournamentId') tournamentId: string,
+      @Param('id') tournamentId: string,
       @Body() dto: CreateMatchDto,
   ) {
     if (!dto.teams || dto.teams.length < 2) {

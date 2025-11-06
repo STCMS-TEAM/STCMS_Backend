@@ -43,7 +43,7 @@ export class TeamService {
     const playerIds = users.map(u => u.id.toString());
 
     // Se il capitano non è già nella lista, aggiungilo
-    if (!playerIds.some(id => id.equals(captainId))) {
+    if (!playerIds.some(id => id === captainId)) {
       playerIds.push(captainId);
     }
 
