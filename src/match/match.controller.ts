@@ -53,6 +53,15 @@ export class MatchController {
     return match;
   }
 
+  @Get(':id/result')
+  @ApiOperation({ summary: 'Get a match result by ID' })
+  @ApiParam({ name: 'id', description: 'Match ID' })
+  @ApiResponse({ status: 200, description: 'Result returned successfully.' })
+  @ApiResponse({ status: 404, description: 'Result not found.' })
+  async findResult(@Param('id') id: string): Promise<any> {
+    return this.matchService.getMatchResult(id);
+  }
+
   // ------------------------------------------------------
   // PATCH /matches/:id/result
   // ------------------------------------------------------

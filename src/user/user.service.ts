@@ -55,6 +55,16 @@ export class UserService {
     return user;
   }
 
+  async getUserEssential(id: string) {
+    const user = await this.userModel
+        .findById(id)
+        .select('name last_name email')
+        .lean()
+        .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async create(data: any): Promise<User> {
     const newUser = new this.userModel(data);
     return await newUser.save();

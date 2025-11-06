@@ -5,10 +5,11 @@ import {Match} from "./match.schema";
 import {TournamentService} from "../tournament/tournament.service";
 import {SPORTS} from "./sports";
 import {TeamService} from "../team/team.service";
+import {UserService} from "../user/user.service";
 
 @Injectable()
 export class MatchService {
-  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService, private readonly teamService: TeamService) {}
+  constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService, private readonly teamService: TeamService, private readonly userService: UserService) {}
 
   async createMatch(tournamentId: string, teams: Types.ObjectId[]) {
     const tournament = await this.tournamentService.findById(tournamentId);
@@ -68,16 +69,31 @@ export class MatchService {
     return match;
   }
 
-  /**
-   * Aggiorna il risultato della partita
-   * Valida la struttura del risultato in base allo sport
-   */
-  async updateResult(matchId: string, newResult: any) {
-    const match = await this.matchModel.findById(matchId);
+  async getMatchResult(matchId: string) {
+    const match = await this.matchModel
+        .findById(matchId)
+        .exec();
     if (!match) throw new NotFoundException('Match not found');
+    if ('score' in match.result) return this.getMatchScore(match);
+    if ('ranking' in match.result) return this.getRankingScore(match);
+    return match.result;
+  }
 
-    match.result = newResult;
-    return match.save();
+  private getMatchScore(match: Match) {
+    // @ts-ignore
+    return Promise.all(Object.entries(match.result.score).map(async ([key, value]) => {
+      const team = await this.teamService.getEssential(key);
+      return {...team, score: value};
+    }));
+  }
+
+  private async getRankingScore(match: Match) {
+    // @ts-ignore
+    return await Promise.all(match.result.ranking.map(async rank => {
+      const { userId, ...rest} = rank;
+      let user = await this.userService.getUserEssential(userId);
+      return {...user, ...rest};
+    }));
   }
 
   async updateScoreResult(match: Match, result: any) {

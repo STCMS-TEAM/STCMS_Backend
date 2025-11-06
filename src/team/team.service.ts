@@ -97,6 +97,14 @@ export class TeamService {
     return team;
   }
 
+  async getEssential(id: string) {
+    const team = await this.teamModel
+        .findOne({ _id: new Types.ObjectId(id) }).select('name').lean()
+        .exec();
+    if (!team) throw new NotFoundException('Team non trovato');
+    return team;
+  }
+
   // 🔹 UPDATE
   async update(id: Types.ObjectId, updateDto: any, captainId: Types.ObjectId): Promise<Team> {
     const { players } = updateDto;
