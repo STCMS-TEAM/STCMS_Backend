@@ -1,20 +1,24 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {Injectable, Logger, OnApplicationShutdown, OnModuleInit} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { TournamentService } from '../tournament/tournament.service';
 import { SPORTS } from '../match/sports';
 import { faker } from '@faker-js/faker';
 import { Types } from 'mongoose';
+import {MatchService} from "../match/match.service";
+import {TeamService} from "../team/team.service";
 
 @Injectable()
-export class DevSeed implements OnModuleInit {
+export class DevSeed implements OnModuleInit, OnApplicationShutdown {
     private readonly logger = new Logger(DevSeed.name);
     private seededUserIds: string[] = [];
-    private seededTournamentIds: string[] = [];
+    private seededTournamentIds: any[] = [];
 
     constructor(
         private readonly userService: UserService,
         private readonly tournamentService: TournamentService,
+        private readonly teamService: TeamService,
+        private readonly matchService: MatchService,
         private readonly configService: ConfigService,
     ) {}
 
@@ -46,76 +50,130 @@ export class DevSeed implements OnModuleInit {
             this.logger.log(`👑 Admin già presente: ${admin.email}`);
         }
 
-        // --- Users e Tournaments ---
-        await this.seedUsers();
-        await this.seedTournaments(admin.id);
+        await this.seed();
 
         // --- Cleanup listener ---
         process.on('SIGINT', async () => {
-            await this.cleanUp();
+            this.logger.log('📴 Ricevuto SIGINT, chiusura applicazione...');
+            await this.onApplicationShutdown('SIGINT');
             process.exit(0);
         });
+
         process.on('SIGTERM', async () => {
-            await this.cleanUp();
+            this.logger.log('📴 Ricevuto SIGTERM, chiusura applicazione...');
+            await this.onApplicationShutdown('SIGTERM');
             process.exit(0);
         });
 
         this.logger.log('🌿 Seeding completato.');
     }
 
-    private async seedUsers() {
-        const users: any[] = [];
-        const password = 'devpass123';
+    private async seed() {
+        // 1️⃣ Crea utenti se non esistono
+        const existingUsers = await this.userService.findAll();
+        if (existingUsers.length >= 40) {
+            this.logger.log('👥 Utenti già presenti, salto creazione.');
+            this.seededUserIds = existingUsers.map(u => u.id.toString());
+        } else {
+            const password = 'password123';
+            const genders = ['male', 'female', 'other'];
 
-        for (let i = 0; i < 40; i++) {
-            const gender = faker.person.sexType();
-            const name = faker.person.firstName(gender as 'male' | 'female');
-            const lastName = faker.person.lastName(gender as 'male' | 'female');
-            const email = faker.internet.email({ firstName: name, lastName, provider: 'example.com' });
-
-            users.push({
-                type_user: 'default',
-                name,
-                last_name: lastName,
-                email: email.toLowerCase(),
-                password: password,
-                birthDate: faker.date.birthdate({ min: 1970, max: 2005, mode: 'year' }),
-                gender,
-            });
-        }
-
-        for (const data of users) {
-            const created = await this.userService.create(data);
-            this.seededUserIds.push(created.id.toString());
-        }
-
-        this.logger.log(`✅ Creati ${users.length} utenti demo`);
-    }
-
-    private async seedTournaments(adminId: string | Types.ObjectId) {
-        const tournaments: any[] = [];
-
-        for (const sportKey of Object.keys(SPORTS)) {
-            for (let i = 1; i <= 2; i++) {
-                tournaments.push({
-                    name: `${SPORTS[sportKey].name} Tournament ${i}`,
-                    description: `Torneo di ${SPORTS[sportKey].name} n°${i}`,
-                    createdBy: adminId,
-                    startDate: faker.date.soon({ days: 15 }),
-                    endDate: faker.date.soon({ days: 30 }),
-                    type: faker.helpers.arrayElement(['single_elimination', 'double_elimination', 'round_robin']),
-                    sport: sportKey,
+            for (let i = 1; i <= 40; i++) {
+                const user = await this.userService.create({
+                    name: faker.person.firstName(),
+                    last_name: faker.person.lastName(),
+                    email: faker.internet.email(),
+                    password,
+                    birthDate: faker.date.birthdate({ min: 1980, max: 2005, mode: 'year' }),
+                    gender: faker.helpers.arrayElement(genders),
                 });
+
+                this.seededUserIds.push(user.id.toString());
+            }
+
+            this.logger.log(`👤 Creati ${this.seededUserIds.length} utenti.`);
+        }
+
+        // 2️⃣ Recupera admin
+        const allUsers = await this.userService.findAll();
+        const admin = allUsers.find(u => u.type_user === 'admin');
+        if (!admin) {
+            this.logger.error('❌ Nessun admin trovato! Esegui prima UserSeed.');
+            return;
+        }
+
+        // 3️⃣ Crea tornei e team per ogni sport
+        const sportKeys = Object.keys(SPORTS);
+        for (const sport of sportKeys) {
+            for (let t = 1; t <= 2; t++) {
+                const tournament = await this.tournamentService.create({
+                    name: `${sport} Tournament ${t}`,
+                    sport,
+                    createdBy: admin._id,
+                    startDate: new Date(),
+                    endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+                    type: 'single_elimination',
+                });
+                this.seededTournamentIds.push(tournament.id.toString());
+                this.logger.log(`🏆 Creato torneo: ${tournament.name}`);
+
+                // 4️⃣ Crea squadre
+                const usersCopy = [...this.seededUserIds];
+                this.shuffleArray(usersCopy);
+                const TEAMS_PER_TOURNAMENT = Math.floor(usersCopy.length / 4);
+                const teams: any[] = [];
+
+                for (let i = 0; i < TEAMS_PER_TOURNAMENT; i++) {
+                    const teamMembers = usersCopy.splice(0, 4);
+                    if (teamMembers.length < 4) break;
+
+                    const captainId = new Types.ObjectId(teamMembers[0]);
+                    const playerEmails = await Promise.all(
+                        teamMembers.map(async id => {
+                            const u = await this.userService.findById(id);
+                            return u.email;
+                        })
+                    );
+
+                    try {
+                        const team = await this.teamService.create(
+                            {
+                                name: `${sport}_Team_${t}_${i + 1}`,
+                                players: playerEmails,
+                            },
+                            new Types.ObjectId(tournament.id),
+                            captainId,
+                        );
+
+                        teams.push(team);
+                    } catch (err) {
+                        this.logger.warn(`⚠️ Errore creazione team ${i + 1} (${err.message})`);
+                    }
+                }
+
+                this.logger.log(`👥 Creati ${teams.length} team per ${tournament.name}`);
+
+                // 5️⃣ Crea match a coppie
+                for (let i = 0; i < teams.length; i += 2) {
+                    if (i + 1 >= teams.length) break;
+                    try {
+                        const match = await this.matchService.createMatch(
+                            tournament.id.toString(),
+                            [teams[i]._id, teams[i + 1]._id],
+                        );
+                    } catch (err) {
+                        this.logger.warn(`⚠️ Errore creazione match ${i / 2 + 1} (${err.message})`);
+                    }
+                }
+
+                this.logger.log(`⚔️ Creati ${Math.floor(teams.length / 2)} match per ${tournament.name}`);
             }
         }
-
-        for (const t of tournaments) {
-            const created = await this.tournamentService.create(t);
-            this.seededTournamentIds.push(created.id.toString());
-        }
-
-        this.logger.log(`✅ Creati ${tournaments.length} tornei demo`);
     }
+
+    private shuffleArray<T>(array: T[]): T[] {
+            return [...array].sort(() => Math.random() - 0.5);
+        }
 
     private async cleanUp() {
         this.logger.log('🧹 Pulizia dati di sviluppo...');
@@ -132,5 +190,12 @@ export class DevSeed implements OnModuleInit {
             }
         }
         this.logger.log('🧽 Dati di sviluppo rimossi.');
+    }
+
+    async onApplicationShutdown(signal?: string) {
+        if (signal) this.logger.log(`📴 Chiusura app con segnale ${signal}`);
+        this.logger.log('🧹 Pulizia dati di sviluppo in corso...');
+        await this.cleanUp();
+        this.logger.log('✅ Pulizia completata.');
     }
 }

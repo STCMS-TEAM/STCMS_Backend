@@ -27,7 +27,7 @@ export class MatchService {
     const result = sportConfig.createDefaultResult(teams.map(t => t.toString()));
 
     const match = new this.matchModel({
-      tournament: tournamentId,
+      tournament: new Types.ObjectId(tournamentId),
       teams,
       result,
     });

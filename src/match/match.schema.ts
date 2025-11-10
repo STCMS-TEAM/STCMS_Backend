@@ -19,6 +19,7 @@ export class Match extends Document {
 
 export const MatchSchema = SchemaFactory.createForClass(Match);
 
+MatchSchema.index({ tournament: 1 });
 
 MatchSchema.pre('save', async function (next) {
     // Se non è una nuova partita o il result è già impostato, non fare nulla
