@@ -12,7 +12,7 @@ import {TournamentModule} from "../tournament/tournament.module";
   ]),
   TournamentModule,],
   controllers: [UserController],
-  providers: [UserSeed, UserService],
+  providers: [UserService],
   exports: [UserService, MongooseModule]
 })
 export class UserModule {}

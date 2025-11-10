@@ -90,4 +90,9 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
   }
+
+  async deleteDefinitely(id: string): Promise<void> {
+    await this.userModel.deleteOne({ _id: id });
+  }
+
 }

@@ -10,6 +10,7 @@ import {ConfigModule, ConfigService} from "@nestjs/config";
 import envConfig from "./config/env.config";
 import {TestModule} from "./test/test.module";
 import {AuthModule} from "./auth/auth.module";
+import {DevSeedModule} from "./seed/seed.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import {AuthModule} from "./auth/auth.module";
       TournamentModule,
       TeamModule,
       MatchModule,
+      ...(process.env.NODE_ENV === 'dev' ? [DevSeedModule] : []),
       //TestModule
   ],
   controllers: [AppController],
