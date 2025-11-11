@@ -160,6 +160,7 @@ export class DevSeed implements OnModuleInit, OnApplicationShutdown {
                         const match = await this.matchService.createMatch(
                             tournament.id.toString(),
                             [teams[i]._id, teams[i + 1]._id],
+                            new Date().toString(),
                         );
                     } catch (err) {
                         this.logger.warn(`⚠️ Errore creazione match ${i / 2 + 1} (${err.message})`);
