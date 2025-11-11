@@ -11,7 +11,7 @@ import {UserService} from "../user/user.service";
 export class MatchService {
   constructor(@InjectModel(Match.name) private readonly matchModel: Model<Match>, private readonly tournamentService: TournamentService, private readonly teamService: TeamService, private readonly userService: UserService) {}
 
-  async createMatch(tournamentId: string, teams: Types.ObjectId[]) {
+  async createMatch(tournamentId: string, teams: Types.ObjectId[], startDate: string) {
     const tournament = await this.tournamentService.findById(tournamentId);
     if (!tournament) throw new NotFoundException('Tournament not found');
 
@@ -29,6 +29,7 @@ export class MatchService {
     const match = new this.matchModel({
       tournament: new Types.ObjectId(tournamentId),
       teams,
+      startDate,
       result,
     });
 

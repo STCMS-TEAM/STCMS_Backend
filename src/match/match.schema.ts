@@ -10,6 +10,9 @@ export class Match extends Document {
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Team' }] })
     teams: Types.ObjectId[];
 
+    @Prop({ required: true })
+    startDate: Date;
+
     @Prop({ enum: ['pending', 'live', 'completed'], default: 'pending' })
     status: string;
 

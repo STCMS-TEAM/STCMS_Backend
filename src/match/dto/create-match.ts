@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {IsArray, ArrayMinSize, IsMongoId, ArrayUnique} from 'class-validator';
+import {IsArray, ArrayMinSize, IsMongoId, ArrayUnique, IsDateString} from 'class-validator';
 
 export class CreateMatchDto {
     @ApiProperty({
@@ -12,4 +12,8 @@ export class CreateMatchDto {
     @ArrayMinSize(2)
     @IsMongoId({ each: true })
     teams: string[];
+
+    @ApiProperty({ example: '2025-11-01T10:00:00Z', description: 'Data di inizio del match' })
+    @IsDateString()
+    startDate: string;
 }
