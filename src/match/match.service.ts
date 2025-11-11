@@ -40,7 +40,7 @@ export class MatchService {
    */
   async getMatchesByTournament(tournamentId: string) {
     return this.matchModel
-        .find({ tournament: tournamentId })
+        .find({ tournament: new Types.ObjectId(tournamentId) })
         .populate('teams')
         .populate('tournament')
         .exec();
