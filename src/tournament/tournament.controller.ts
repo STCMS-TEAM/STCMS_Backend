@@ -60,8 +60,9 @@ export class TournamentController {
   @Get(':id/matches')
   @ApiOperation({ summary: 'Ottiene tutti i match di un torneo' })
   @ApiParam({ name: 'id', type: String })
-  async findAllByTournament(@Param('id') tournamentId: string) {
-    return this.matchService.getMatchesByTournament(tournamentId);
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter matches by status' })
+  async findAllByTournament(@Param('id') tournamentId: string, @Query('status') status?: string) {
+    return this.matchService.getMatchesByTournament(tournamentId, status);
   }
 
   @Post()

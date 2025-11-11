@@ -39,11 +39,12 @@ export class MatchService {
   /**
    * Ritorna tutte le partite di un torneo
    */
-  async getMatchesByTournament(tournamentId: string) {
+  async getMatchesByTournament(tournamentId: string, status?: string) {
+    const filter = { tournament: new Types.ObjectId(tournamentId) };
     return this.matchModel
-        .find({ tournament: new Types.ObjectId(tournamentId) })
+        .find(status ? { status, ...filter } : filter)
         .populate('teams')
-        .populate('tournament')
+        .populate('tournament').lean()
         .exec();
   }
 
