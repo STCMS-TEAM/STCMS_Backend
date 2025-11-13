@@ -1,0 +1,16 @@
+services:
+  mongo:
+    image: mongo
+    container_name: db-stcms
+    restart: always
+    ports:
+      - ${MONGO_PORT}:${MONGO_PORT}
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSOWRD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
