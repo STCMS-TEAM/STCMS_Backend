@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
   Query,
+  UsePipes,
+  ValidationPipe,
   Req,
   UseGuards
 } from '@nestjs/common';
@@ -23,6 +25,7 @@ import {ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags} f
 import {UpdateTournamentDto} from "./dto/update-tournament";
 import {MatchService} from "../match/match.service";
 import {CreateMatchDto} from "../match/dto/create-match";
+import { MatchesQueryDto } from '../match/dto/filterbydate-match.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -56,14 +59,57 @@ export class TournamentController {
   async findAll(@Param('id') tournamentId: string) {
     return this.teamService.findAllByTournament(tournamentId);
   }
-
+/*
   @Get(':id/matches')
-  @ApiOperation({ summary: 'Ottiene tutti i match di un torneo' })
+  @ApiOperation({ summary: 'Get all matches of a tournaments' })
   @ApiParam({ name: 'id', type: String })
   @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter matches by status' })
   async findAllByTournament(@Param('id') tournamentId: string, @Query('status') status?: string) {
     return this.matchService.getMatchesByTournament(tournamentId, status);
   }
+*/
+
+@Get(':id/matches')
+@ApiOperation({ summary: 'Get all matches of a tournaments filtered by date/time interval' })
+@ApiParam({ name: 'id', type: String, description: 'Turnament ID' })
+@ApiQuery({
+  name: 'fromDateTime',
+  type: String,
+  required: false,
+  description: 'Date/time ISO 8601 from (es: 2025-11-19T10:00:00Z)'
+})
+@ApiQuery({
+  name: 'toDateTime',
+  type: String,
+  required: false,
+  description: 'Date/time ISO 8601 to (es: 2025-11-19T12:00:00Z)'
+})
+@ApiQuery({
+  name: 'status',
+  type: String,
+  required: false,
+  description: 'Filter of the match by state'
+})
+@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+async findAllByTournamentAndDate(
+  @Param('id') tournamentId: string,
+  @Query() query: MatchesQueryDto,
+) {
+
+
+  if (query.fromDateTime && query.toDateTime && query.fromDateTime > query.toDateTime) {
+    throw new BadRequestException('fromDateTime can not be more then toDateTime');
+  }
+
+  return this.matchService.getMatchesByTournamentAndDate(
+    tournamentId,
+    query.fromDateTime,
+    query.toDateTime,
+    query.status,
+  );
+}
+
+
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -103,7 +149,7 @@ export class TournamentController {
   @Post(':id/matches')
   //@UseGuards(JwtAuthGuard, IsTournamentCreatorGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Crea un nuovo match per un torneo' })
+  @ApiOperation({ summary: 'Create a new match for a turnament' })
   @ApiParam({ name: 'tournamentId', type: String })
   @ApiResponse({ status: 201, description: 'Match creato con successo' })
   @ApiResponse({ status: 404, description: 'Torneo non trovato' })

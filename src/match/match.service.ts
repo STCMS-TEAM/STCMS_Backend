@@ -48,6 +48,42 @@ export class MatchService {
         .exec();
   }
 
+
+async getMatchesByTournamentAndDate(
+  tournamentId: string,
+  fromDateTime?: Date | null,
+  toDateTime?: Date | null,
+  status?: string | null,
+) {
+    console.log(fromDateTime);
+  const filter: any = {
+    tournament: new Types.ObjectId(tournamentId),
+  };
+
+  // Filtro basato su range temporale
+  if (fromDateTime && toDateTime) {
+    filter.startDate = { $gte: fromDateTime, $lte: toDateTime };
+  } else if (fromDateTime) {
+    filter.startDate = { $gte: fromDateTime };
+  } else if (toDateTime) {
+    filter.startDate = { $lte: toDateTime };
+  }
+
+  if (status && status.trim() !== '') {
+    filter.status = status;
+  }
+
+return {
+  debug: {
+    fromDateTime,
+    toDateTime,
+    filter,
+  },
+  matches: await this.matchModel.find(filter).populate('teams').populate('tournament').lean().exec()
+};
+}
+
+
   async getMatchSport(matchId: string) {
     const match = await this.matchModel
         .findById(matchId)
