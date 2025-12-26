@@ -140,7 +140,7 @@ async findAllByTournamentAndDate(
       );
     } catch (error) {
       if (error.code === 11000) {
-        throw new BadRequestException('Un team con questo nome esiste già in questo torneo');
+        throw new BadRequestException('A team with this name is already in the tournament');
       }
       throw error;
     }
@@ -151,14 +151,14 @@ async findAllByTournamentAndDate(
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new match for a turnament' })
   @ApiParam({ name: 'tournamentId', type: String })
-  @ApiResponse({ status: 201, description: 'Match creato con successo' })
-  @ApiResponse({ status: 404, description: 'Torneo non trovato' })
+  @ApiResponse({ status: 201, description: 'Match created with succes' })
+  @ApiResponse({ status: 404, description: 'Torneo not found' })
   async createMatch(
       @Param('id') tournamentId: string,
       @Body() dto: CreateMatchDto,
   ) {
     if (!dto.teams || dto.teams.length < 2) {
-      throw new BadRequestException('Almeno due squadre sono obbligatorie');
+      throw new BadRequestException('We need at least 2 team');
     }
     const teams = dto.teams.map((t) => new Types.ObjectId(t));
     return this.matchService.createMatch(tournamentId, teams, dto.startDate);

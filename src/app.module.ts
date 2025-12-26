@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {MongooseModule} from "@nestjs/mongoose";
 import {UserModule} from "./user/user.module";
+import { BlogModule } from './blog/blog.module';
 import {TournamentModule} from "./tournament/tournament.module";
 import {TeamModule} from "./team/team.module";
 import {MatchModule} from "./match/match.module";
@@ -27,6 +28,7 @@ import {DevSeedModule} from "./seed/seed.module";
           inject: [ConfigService],
       }),
       UserModule,
+      BlogModule,
       AuthModule,
       TournamentModule,
       TeamModule,
