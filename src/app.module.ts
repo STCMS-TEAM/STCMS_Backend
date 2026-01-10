@@ -1,40 +1,46 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import {MongooseModule} from "@nestjs/mongoose";
-import {UserModule} from "./user/user.module";
+import { MongooseModule } from '@nestjs/mongoose';
+import { UserModule } from './user/user.module';
 import { BlogModule } from './blog/blog.module';
-import {TournamentModule} from "./tournament/tournament.module";
-import {TeamModule} from "./team/team.module";
-import {MatchModule} from "./match/match.module";
-import {ConfigModule, ConfigService} from "@nestjs/config";
-import envConfig from "./config/env.config";
-import {TestModule} from "./test/test.module";
-import {AuthModule} from "./auth/auth.module";
-import {DevSeedModule} from "./seed/seed.module";
+import { TournamentModule } from './tournament/tournament.module';
+import { TeamModule } from './team/team.module';
+import { MatchModule } from './match/match.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import envConfig from './config/env.config';
+import { TestModule } from './test/test.module';
+import { AuthModule } from './auth/auth.module';
+import { DevSeedModule } from './seed/seed.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
-      ConfigModule.forRoot({
-          isGlobal: true,
-          load: [envConfig],
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'), // La cartella dove metteremo il build di Angular
+      exclude: ['/api*'], // Non servire file statici se la rotta inizia con /api
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [envConfig],
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+        autoIndex: true,
       }),
-      MongooseModule.forRootAsync({
-          imports: [ConfigModule],
-          useFactory: async (configService: ConfigService) => ({
-              uri: configService.get<string>('MONGO_URI'),
-              autoIndex: true,
-          }),
-          inject: [ConfigService],
-      }),
-      UserModule,
-      BlogModule,
-      AuthModule,
-      TournamentModule,
-      TeamModule,
-      MatchModule,
-      ...(process.env.NODE_ENV === 'dev' ? [DevSeedModule] : []),
-      //TestModule
+      inject: [ConfigService],
+    }),
+    UserModule,
+    BlogModule,
+    AuthModule,
+    TournamentModule,
+    TeamModule,
+    MatchModule,
+    ...(process.env.NODE_ENV === 'dev' ? [DevSeedModule] : []),
+    //TestModule
   ],
   controllers: [AppController],
   providers: [AppService],
