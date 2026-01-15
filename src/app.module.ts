@@ -18,8 +18,7 @@ import { join } from 'path';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'client'), // La cartella dove metteremo il build di Angular
-      exclude: ['/api*'], // Non servire file statici se la rotta inizia con /api
+      rootPath: join(__dirname, '..', 'browser'), // La cartella dove metteremo il build di Angular
     }),
     ConfigModule.forRoot({
       isGlobal: true,

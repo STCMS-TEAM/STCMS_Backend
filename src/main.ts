@@ -2,19 +2,21 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
-import {ValidationPipe} from "@nestjs/common";
-import * as process from "node:process";
+import { ValidationPipe } from '@nestjs/common';
+import * as process from 'node:process';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  if(process.env.NODE_ENV === 'dev') app.enableShutdownHooks();
-
+  if (process.env.NODE_ENV === 'dev') app.enableShutdownHooks();
+  app.setGlobalPrefix('api');
   app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-    }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // Enable CORS
   app.enableCors({
@@ -26,13 +28,12 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('STCMS')
     .setDescription('STCMS backend')
-    .setVersion('1.0')
     .addBasicAuth(
       {
         type: 'http',
         scheme: 'basic',
       },
-      'basic-auth', // nome dello schema da riusare nei controller
+      'basic-auth',
     )
     .addBearerAuth()
     .build();
