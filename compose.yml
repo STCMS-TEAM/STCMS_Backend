@@ -1,14 +1,13 @@
 services:
   mongo:
     image: mongo
-    container_name: db-stcms
+    container_name: db-stcms-microservice
     restart: always
     ports:
-      - ${MONGO_PORT}:${MONGO_PORT}
+      - '${MONGO_PORT}:27017' # hostPort:containerPort
     environment:
-      MONGO_URI: ${MONGO_URI}
-      MONGO_USERNAME: ${MONGO_USERNAME}
-      MONGO_PASSOWRD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     volumes:
       - mongo-data:/data/db
 

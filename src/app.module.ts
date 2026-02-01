@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
-import { BlogModule } from './blog/blog.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { TeamModule } from './team/team.module';
 import { MatchModule } from './match/match.module';
@@ -12,28 +11,27 @@ import envConfig from './config/env.config';
 import { TestModule } from './test/test.module';
 import { AuthModule } from './auth/auth.module';
 import { DevSeedModule } from './seed/seed.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 
 @Module({
   imports: [
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'browser'), // La cartella dove metteremo il build di Angular
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [envConfig],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'),
-        autoIndex: true,
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('env.MONGO_URI');
+        console.log('Mongo URI:', uri); // debug
+        return {
+          uri,
+          autoIndex: true,
+        };
+      },
       inject: [ConfigService],
     }),
+
     UserModule,
-    BlogModule,
     AuthModule,
     TournamentModule,
     TeamModule,
