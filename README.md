@@ -56,6 +56,29 @@ $ yarn run test:e2e
 # test coverage
 $ yarn run test:cov
 ```
+## Env file
+```
+# --- Server Configuration ---
+SERVER_DEV_PORT=8000
+NODE_ENV=dev
+JWT_SECRET=hpZKnv0Bfm7lybvg8qvzUM6mHxvzeFLfBmR9g3DpM+I=
+
+# --- MongoDB Configuration ---
+MONGO_USERNAME=Admin
+MONGO_PASSWORD=password123
+MONGO_HOST=localhost
+MONGO_PORT=27018
+MONGO_DB=stcms-db-microservices
+MONGO_URI=mongodb://Admin:password123@localhost:27018/stcms-db-microservices?authSource=admin
+
+# --- Initial Admin Setup ---
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=AdminPassword123
+ADMIN_NAME=Admin
+ADMIN_LASTNAME=User
+
+
+```
 
 ## Deployment
 
