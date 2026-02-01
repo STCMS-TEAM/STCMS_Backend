@@ -2,11 +2,22 @@ import {Injectable, InternalServerErrorException, NotFoundException} from '@nest
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
 import { Tournament } from './tournament.schema';
-import {TeamService} from "../team/team.service";
+import { Match } from '../match/match.schema';
+import { Team } from '../team/team.schema';
+
 
 @Injectable()
 export class TournamentService {
-  constructor(@InjectModel(Tournament.name) private tournamentModel: Model<Tournament>) {}
+  constructor(
+  @InjectModel(Tournament.name)
+  private readonly tournamentModel: Model<Tournament>,
+
+  @InjectModel(Team.name)
+  private readonly teamModel: Model<Team>,
+
+  @InjectModel(Match.name)
+  private readonly matchModel: Model<Match>,
+) {}
 
   async findAll(sport?: string): Promise<Tournament[]> {
     return this.tournamentModel
@@ -63,4 +74,55 @@ export class TournamentService {
   }
 
 
+
+  async getStandings(tournamentId: string) {
+    // 1. Recupera tutte le squadre del torneo
+    const teams = await this.teamModel
+      .find({ tournament: tournamentId })
+      .select('name')
+      .lean();
+
+    // Mappa iniziale punteggi
+    const standingsMap: Record<string, { teamName: string; points: number }> = {};
+
+    teams.forEach(team => {
+      standingsMap[team._id.toString()] = {
+        teamName: team.name,
+        points: 0,
+      };
+    });
+
+    // 2. Recupera tutti i match completati
+    const matches = await this.matchModel.find({
+      tournament: tournamentId,
+      status: 'completed',
+    }).lean();
+
+    // 3. Calcolo punteggi
+    for (const match of matches) {
+      const result = match.result;
+      const teamIds = Object.keys(result);
+
+      if (teamIds.length !== 2) continue; // sicurezza
+
+      const [teamA, teamB] = teamIds;
+
+      const scoreA = result[teamA].score;
+      const scoreB = result[teamB].score;
+
+      if (scoreA > scoreB) {
+        standingsMap[teamA].points += 2;
+      } else if (scoreA < scoreB) {
+        standingsMap[teamB].points += 2;
+      } else {
+        standingsMap[teamA].points += 1;
+        standingsMap[teamB].points += 1;
+      }
+    }
+
+    // 4. Ordina la classifica
+    return Object.values(standingsMap).sort(
+      (a, b) => b.points - a.points,
+    );
+  }
 }

@@ -44,13 +44,6 @@ export class TournamentController {
     return this.tournamentService.findAll(sport);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get tournament by ID' })
-  @ApiParam({ name: 'id', description: 'Tournament ID' })
-  @ApiResponse({ status: 200, description: 'Tournament returned successfully.' })
-  async getOne(@Param('id') id: string): Promise<Tournament> {
-    return this.tournamentService.findById(id);
-  }
 
   @Get(':id/teams')
   @ApiOperation({ summary: 'Get all teams in a tournament' })
@@ -68,6 +61,46 @@ export class TournamentController {
     return this.matchService.getMatchesByTournament(tournamentId, status);
   }
 */
+@Get(':tournamentId/rankings')
+  @ApiOperation({
+    summary: 'Ottiene la classifica del torneo',
+    description:
+      'Restituisce la classifica delle squadre del torneo ordinata per punteggio decrescente. ' +
+      'Vittoria = 2 punti, Pareggio = 1 punto, Sconfitta = 0 punti.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID del torneo',
+    example: '65b0c9a4f1d2c90012345678',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Classifica del torneo',
+    schema: {
+      example: [
+        {
+          teamName: 'Team Alpha',
+          points: 8,
+        },
+        {
+          teamName: 'Team Beta',
+          points: 5,
+        },
+        {
+          teamName: 'Team Gamma',
+          points: 2,
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Torneo non trovato',
+  })
+  async getStandings(@Param('id') id: string) {
+    return this.tournamentService.getStandings(id);
+  }
+
 
 @Get(':id/matches')
 @ApiOperation({ summary: 'Get all matches of a tournaments filtered by date/time interval' })
@@ -110,6 +143,13 @@ async findAllByTournamentAndDate(
 }
 
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get tournament by ID' })
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiResponse({ status: 200, description: 'Tournament returned successfully.' })
+  async getOne(@Param('id') id: string): Promise<Tournament> {
+    return this.tournamentService.findById(id);
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -163,7 +203,6 @@ async findAllByTournamentAndDate(
     const teams = dto.teams.map((t) => new Types.ObjectId(t));
     return this.matchService.createMatch(tournamentId, teams, dto.startDate);
   }
-
   @Patch(':id')
   @UseGuards(JwtAuthGuard, IsTournamentCreatorGuard)
   @ApiBearerAuth()
@@ -174,6 +213,7 @@ async findAllByTournamentAndDate(
     return this.tournamentService.update(id, body);
   }
 
+  
   @Delete(':id')
   @UseGuards(JwtAuthGuard, IsTournamentCreatorGuard)
   @ApiBearerAuth()
@@ -184,4 +224,6 @@ async findAllByTournamentAndDate(
     await this.tournamentService.remove(id);
     return { message: 'Tournament deleted successfully' };
   }
+
+
 }
