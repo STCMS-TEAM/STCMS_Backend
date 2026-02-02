@@ -69,7 +69,7 @@ export class TournamentController {
       'Vittoria = 2 punti, Pareggio = 1 punto, Sconfitta = 0 punti.',
   })
   @ApiParam({
-    name: 'id',
+    name: 'tournamentId',
     description: 'ID del torneo',
     example: '65b0c9a4f1d2c90012345678',
   })
@@ -97,7 +97,7 @@ export class TournamentController {
     status: 404,
     description: 'Torneo non trovato',
   })
-  async getStandings(@Param('id') id: string) {
+  async getStandings(@Param('tournamentId') id: string) {
     return this.tournamentService.getStandings(id);
   }
 
