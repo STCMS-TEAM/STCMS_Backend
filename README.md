@@ -57,6 +57,44 @@ $ yarn run test:e2e
 $ yarn run test:cov
 ```
 
+## Database
+
+The application uses **MongoDB** as database and it's thought to be executed with **Docker** using `docker-compose`.
+
+### Database launch
+
+The service MongoDB is defined in the file `docker-compose.yml`:
+
+```yaml
+services:
+  mongo:
+    image: mongo
+    container_name: db-stcms
+    restart: always
+    ports:
+      - ${MONGO_PORT}:${MONGO_PORT}
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSOWRD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+```
+
+### Environmental variables
+```
+MONGO_URI=mongodb://mongo:27017/your-db-name
+MONGO_PORT=27017
+MONGO_USERNAME=your-username
+MONGO_PASSWORD=your-password
+```
+
+### Docker launch
+```docker-compose up -d```
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
